@@ -1,0 +1,295 @@
+\makeatletter
+\def\input@path{ {./} {../sty/} {sty/} }
+\makeatother
+
+\documentclass[11pt,answers]{exam}
+
+\usepackage{macro }
+
+
+\author{Abdeldjabar ISMAIL ABDRAMAN}
+\date{2025-2026}
+\title{{\bf Conception Formelle} \\ DM : Un peu de théorie et de pratique.}
+
+\qformat{\large \textbf{Exercice \thequestion~: \thequestiontitle\hfill}} 
+
+\renewcommand{\solutiontitle}{\noindent\textbf{Réponse:}\par\noindent}
+\ifdef{\dyslexic}{
+\usepackage{fontspec}
+
+\setmainfont{OpenDyslexic}
+}{}
+
+
+\begin{document}
+
+\maketitle
+
+Ce travail est à réaliser en binôme. La date de rendu est fixée au 23 mars 2026. Le rendu sera à effectuer via moodle.
+
+
+%Les exercices sont par difficulté croissante, les deux premiers sont assez guidés et les questions sont relativement bien détaillées, mais faites bien attention à ne pas oublier des éléments dans les questions (certaines contiennent des sous-questions). Une attention particulière sera portée à la clarté des justification et au fait qu’elles montrent la compréhension de l’exercice ou non. Le dernier est un exercice non guidé, ce qui ne veut pas dire qu’il n’y a pas autant à faire que dans les deux précédents.
+
+%Les trois exercices devraient avoir un poids à peu près similaire dans la notation finale. Ce barème n’est qu’indicatif, mais le message de celui-ci est de traiter les questions dans l’ordre.
+
+\paragraph{Structure du devoir et rendu}
+
+Le devoir est constitué du présent document, ainsi que de fichiers de code à compléter en parallèle des questions posées.
+Le code fourni est découpé ainsi : un fichier .c pour chaque fonction.
+Ces fichiers sont à remplir au fur et à mesure.
+
+Pour répondre aux questions, vous avez deux choix :
+\begin{itemize}
+    \item Soit compléter le présent document .tex en plaçant vos réponses dans les blocs solutionorbox prévues à cet effet. Pour cela, référez-vous aux macros définies dans les sujets de TD. Si vous avez besoin de compiler avec la police OpenDyslexic, faites-le avec la ligne suivante : 
+    
+    \verb#latexmk -xelatex -usepretex='\def\dyslexic{}' DM.tex#
+    \item Soit produire un document pdf par d’autres moyens (autre logiciel, scan), tant que c’est lisible, ça me conviendra.
+\end{itemize}
+
+Vous devrez rendre (sur la page moodle du cours) :
+\begin{itemize}
+    \item Le présent document de réponse (ou votre version).
+    \item Le dossier \texttt{code} complété. Dans les fichiers qui le composent, vous pourrez si besoin rajouter des commentaires expliquant comment prouver certaines spécifications si ce n’est pas immédiat, ou expliquer ce qui vous bloque.
+\end{itemize}
+
+Si la réponse à une question est intégralement contenue dans les fichiers de code (c’est possible pour les questions de spécification en ACSL ou de code), vous indiquerez les fichiers et les lignes concernées dans le document de réponse.
+
+
+\paragraph{Rappels de logique :}
+
+On rappelle que :
+\begin{itemize}
+    \item $p \Rightarrow q \equiv \neg p \vee q$
+    \item $(p \wedge q) \Rightarrow r \equiv p \Rightarrow q \Rightarrow r$.
+\end{itemize}
+
+Vous aurez à manipuler des expressions comprenant des $\forall$. Pour ces expressions-là, lorsque vous appliquez un pas de $\WLP$, grossièrement il vous faut découper votre formule entre partie modifiée et partie non-modifiée, et appliquer le calcul. Plus concrètement ici, ce que vous devriez avoir, c’est quelque chose du genre :
+\begin{align*}
+    & \WLP(t[i] = x,\forall j; 0 \leq j \leq i ==> \varphi(t[j]))\\
+    \equiv & \WLP(t[i] = x,(\forall j; 0 \leq j < i ==> \varphi(t[j])) \wedge \varphi(t[i]))\\
+    \equiv & (\forall j; 0 \leq j < i ==> \varphi(t[j])) \wedge \varphi(x)
+\end{align*}
+
+La règle la plus générale d’où vient cela est la suivante : pour $\varphi$ et $\psi$ des formules quelconques :
+\begin{align*}
+    \forall j; \varphi(j) \equiv \forall j; \psi(j) ==> \varphi(j) \wedge \forall j; \neg \psi(j) ==> \varphi(j);
+\end{align*}
+
+Un autre point, c’est «soyez paresseux» : si vous arrivez à un moment sur un calcul équivalent à $\bot \Rightarrow \WLP(i-j,\phi)$, il est inutile de calculer $\WLP(i-j,\phi)$ pour déterminer que l’implication est vraie.
+
+On attendra que vos calculs de $\WP$ soient suffisamment détaillés, mais vous pouvez sauter quelques étapes si elles sont faciles (comme par exemples, appliquer plusieurs substitutions d’un coup). Évidemment, tant que cela est correct.
+
+Comme dit souvent, pour les justification de vérité de formule, on n’attendra pas de preuves formelles, mais des justifications convaincantes (i.e., qui n’oublient pas de cas, mais on restera tolérant sur la forme).
+En gros, quand vous aurez une implication, une possibilité sera de dire un truc du genre «l’implication est vraie car telle et telle partie de la partie gauche impliquent bien la partie droite».
+Un «ben oui» (ou plutôt un remplacement par $\top$) sera admissible pour des propriétés du genre $\bot \Rightarrow \varphi$, $\varphi \Rightarrow \top$ ou $a < b \Rightarrow a \leq b$.
+Cependant, pour faire cela de manière convaincante, vous auriez intérêt à simplifier vos formules avant.
+
+Dans le présent sujet, on donne une version normalisée du code pour vous faciliter
+preuves (if then else développés, un seul return, que des while). Évidemment, vous pouvez
+coder autrement, mais il sera plus aisé de faire ces restrictions sur papier.
+
+Attention : on manipule beaucoup de unsigned int. En pratique, dans vos formules, \emph{quantifiez sur des integer, et non des int}.
+
+\paragraph{Un mot sur les preuves :}
+
+Certaines des preuves peuvent être difficiles pour les solveurs, aussi faites bien les trois points suivants avant de désespérer de vos spécifications :
+\begin{itemize}
+    \item Vérifiez que le solveur Z3 (counter-examples) est activé (il parvient à démontrer des propriétés où alt-ergo et les autres variantes de Z3 échouent -- ne me demandez pas pourquoi). Attention, il y a trois variantes de Z3 installée au CREMI, et c’est bien celle avec counter-examples qui fonctionne dans certains cas. Pensez à cliquer sur «filter» dans l’onglet Provers de frama-c si vous ne le voyez pas.
+    \item Si certaines propriétés ne sont pas prouvées, retentez la preuve : quand les solveurs tentent trop de preuves en même temps, il arrive que certaines timeout pour de mauvaises raisons. Les relancer peut régler le problème.
+    \item Prouvez d’abord le contrat de fonction, avant d’ajoutez les gardes RTE, puis prouvez ces dernières. Dans certains cas, tenter de tout prouver d’un coup peut ne pas fonctionner.
+    \item Si cela ne marche toujours pas (et que vous avez confiance en la propriété), cliquez sur le nom du but, puis sur la tactique «filter». Cela peut parfois régler le problème (aucune garantie bien sûr).
+\end{itemize}
+
+Si rien de tout cela ne marche, vous avez probablement oublié de spécifier certaines hypothèses (ou votre propriété est fausse), donc reprenez votre stylo.
+
+Évidemment, naviguez entre les questions : les questions sur frama-c peuvent vous aider pour les questions théoriques et vice-versa.
+
+\begin{questions}
+
+   
+    \titledquestion{Valeur absolue}
+  
+    On commence par une petit mise en jambe, la fonction valeur absolue.
+
+        \begin{lstlisting}
+/*@ ensures TODO;
+*/
+int abs(int n)
+{
+    int res = n;
+    if (n < 0)
+        res = -n;
+    return res;
+}
+    \end{lstlisting}
+
+    \begin{parts}
+
+    \part Si ce n’est pas déjà fait et que vous rendrez le présent .tex, mettez vos noms dans la balise author situé en haut de ce document (celle où il y a écrit un message assez explicite). (0 points)
+
+    \part Déterminez des post-condition décrivant le résultat de la fonction \code{abs} (cette post-condition devrait vous faire penser à des fonctions vues et revues en cours).
+
+    \part Calculez $\WP(\code{abs},\psi)$ pour $\psi$ la post-condition que vous avez déterminée, et dé\-dui\-sez-en un triplet de \bsc{Hoare} valide.
+
+    \begin{solutionorbox}
+        METTEZ VOTRE RÉPONSE ICI.
+    \end{solutionorbox}
+
+    \part Évidemment, on a ici une correction partielle, dans le sens où on n’a pas tenu compte des comportements indéterminés.
+    Quelle information manque-t’il pour assurer qu’il n’y aura pas d’erreur à l’exécution ?
+
+    \begin{solutionorbox}
+        METTEZ VOTRE RÉPONSE ICI.
+    \end{solutionorbox}
+
+
+    On considère un autre code pour calculer cette fonction :
+
+\begin{lstlisting}
+/*@ ensures TODO;
+*/
+int abs2(int n)
+{
+    int aux = n % 2 + (n - 1) % 2;
+    return n * aux;
+}
+\end{lstlisting}
+
+    \part Calculez $\WP(\code{abs2},\psi)$ pour $\psi$ la même post-condition que la fonction précédente.
+    Justifiez que la formule obtenue est toujours vraie (on ne demande pas une preuve formelle mais une explication de la raison).
+
+    \begin{solutionorbox}
+        METTEZ VOTRE RÉPONSE ICI.
+    \end{solutionorbox}
+
+    \part Quelle préconditions faut-il pour ne pas avoir de comportement indéterminé ? Justifiez.
+
+    \begin{solutionorbox}
+        METTEZ VOTRE RÉPONSE ICI.
+    \end{solutionorbox}
+
+    \part Compléter le fichier \texttt{abs.c} de manière à ce que Frama-C puisse démontrer la post-condition que vous avez déterminée, en ajoutant les assertions RTE. Il est bien évidemment possible (et encouragé) de répondre aux questions précédentes grâce à celle-ci.
+
+    Ajoutez également les clauses assigns et terminates pertinentes.
+
+    \end{parts}
+
+\titledquestion{Moyenne}
+
+On souhaite déterminer une fonction dont le prototype et la spécification ACSL sont les suivants:
+
+\begin{lstlisting}
+/*@ ensures \result == (a+b)/2;
+*/
+unsigned int average(unsigned int a, unsigned int b);
+\end{lstlisting}
+
+Le but de l’exercice est de donner et démontrer la correction d’une telle fonction.
+
+\begin{parts}
+
+    \part Pourquoi la solution naïve ne fonctionne pas ? Plus précisément, quelle est la précondition qui fait que le code naïf de cette fonction calcule le bon résultat ?
+
+    \begin{solutionorbox}
+        METTEZ VOTRE RÉPONSE ICI.
+    \end{solutionorbox}
+    \part Donnez une fonction qui calcule la moyenne correctement pour toutes les paires d’entiers non-signés (pensez aux quotients et restes).
+    Vous certifierez votre fonction avec Frama-C : elle doit être valide sans aucune clause \texttt{requires}.
+
+    \begin{solutionorbox}
+        METTEZ VOTRE RÉPONSE ICI.
+    \end{solutionorbox}
+
+    \part Justifiez pourquoi le code proposé à la question précédente est correct.
+
+    \begin{solutionorbox}
+        METTEZ VOTRE RÉPONSE ICI.
+    \end{solutionorbox}
+\end{parts}
+
+\titledquestion{Doubler une valeur}
+
+On considère la fonction suivante et l’une des post-condition qu’on souhaite qu’elle vérifie : 
+
+\begin{lstlisting}
+/*@
+ensures \forall integer i; 0 <= i < size ==> 
+\old(src[i] == val) ==> target[i] == 2*val;*/
+void mul_val(int *src, int *target,
+  unsigned int size, int val)
+{
+    unsigned int pos = 0;
+    while (pos < size)
+    {
+        target[pos] = src[pos];
+        if (target[pos] == val)
+        {
+            target[pos] *= 2;
+        }
+        pos++;
+    }
+    return;
+}
+\end{lstlisting}
+
+\begin{parts}
+\part Donnez une spécification en ACSL de cette fonction. Cette spécification doit être validée par Frama-C et passer les gardes générées par RTE.
+Votre spécification doit être précise, c’est-à-dire que des fonctions qui font autre chose ne doivent pas la satisfaire (par exemple, il ne faut pas que la fonction qui remplit le tableau avec \code{2*val} la satisfasse -- et donc, il manque des post-conditions pour le moment).
+
+\begin{solutionorbox}
+    METTEZ VOTRE RÉPONSE ICI.
+\end{solutionorbox}
+
+\part Déduisez-en une documentation au format doxygen précise.
+\begin{solutionorbox}
+    METTEZ VOTRE RÉPONSE ICI.
+\end{solutionorbox}
+
+\part Donnez le calcul de WP pour la boucle de la fonction sur un invariant quelconque.
+
+\begin{solutionorbox}
+    METTEZ VOTRE RÉPONSE ICI.
+\end{solutionorbox}
+
+\part Prouvez que l’un de vos invariants (l’un de ceux avec un $\forall$) est bien un invariant, en utilisant ce qui précède.
+
+\begin{solutionorbox}
+    METTEZ VOTRE RÉPONSE ICI.
+\end{solutionorbox}
+\part Donnez le calcul de WP de la fonction avec vos invariants et post-condition (on admettra que les invariants en sont, pour ceux non traités à la question précédente). Déduisez-en un triplet de \textsc{Hoare} pour cette fonction.
+
+\begin{solutionorbox}
+    METTEZ VOTRE RÉPONSE ICI.
+\end{solutionorbox}
+\part Démontrez que la boucle termine (faites la preuve du variant).
+
+\begin{solutionorbox}
+    METTEZ VOTRE RÉPONSE ICI.
+\end{solutionorbox}
+\part Vous avez probablement parlé quelque part de la séparation des tableaux \code{src} et \code{target}.
+Dans cette fonction, on peut avoir un certain aliasing en ayant tout de même les post-condition énoncées plus haut satisfaites.
+Trouvez cette condition plus fine pour la séparation des tableau \code{src} et \code{target} et justifiez pourquoi elle est correcte.
+
+\begin{solutionorbox}
+    METTEZ VOTRE RÉPONSE ICI.
+\end{solutionorbox}
+\part On souhaite maintenant modifier cette fonction pour qu’elle renvoie le nombre d’éléments modifiés (un \code{unsigned int}). Donnez cette version modifiée dans une seconde fonction, \code{mul_var_modif}.
+
+\begin{solutionorbox}
+    METTEZ VOTRE RÉPONSE ICI.
+\end{solutionorbox}
+\part Rajoutez ce qu’il faut aux contrats et aux invariant pour spécifier ce nouveau comportement (aidez-vous de ce qui vous est fourni au TD5, il faut une axiomatique pour y parvenir). Souvenez-vous de l’option \texttt{-warn-unsigned-overflow}.
+
+\begin{solutionorbox}
+    METTEZ VOTRE RÉPONSE ICI.
+\end{solutionorbox}
+\part De quels nouveaux invariants avez-vous eu besoin pour faire la preuve ? Expliquez pourquoi vous en avez eu besoin.
+
+\begin{solutionorbox}
+    METTEZ VOTRE RÉPONSE ICI.
+\end{solutionorbox}
+\end{parts}
+
+\end{questions}
+
+\end{document}
