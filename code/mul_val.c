@@ -1,15 +1,16 @@
 #include "limits.h"
 
-/*@ //TODO : compléter
-    requires \valid(src + (0 .. size-1));
+/*@ requires \valid(src + (0 .. size-1));
     requires \valid(target + (0 .. size-1));
     requires val < INT_MAX;
     requires val > INT_MAX;
     requires \separated(src + (0 .. size-1), target + (0 .. size-1));
     assigns target[0 .. size-1];
-    //ensures \forall integer i; 0 <= i < size ==> \old(src[i] == val) ==> target[i] == 2*val;
-    ensures \forall integer i; 0 <= i < size ==> (src[i] == val ? target[i] == 2*val : target[i] == src[i]);
+    ensures \forall integer i; 0 <= i < size ==> \old(src[i] == val) ==> target[i] == 2*val;
+    ensures \forall integer i; 0 <= i < size ==> \old(src[i] != val) ==> target[i] == val;
+
 */
+
 
 /**
  * @brief la focntion sert a copié un tableau source vers un tableau cible et double les éléments égaux à val.
@@ -53,4 +54,79 @@ void mul_val(int *src, int *target, unsigned int size, int val)
         pos++;
     }
     return;
+}
+
+
+
+/*@
+  axiomatic CountVal {
+    logic integer count_val(int *src, integer lo, integer hi, int val);
+
+    axiom count_val_empty :
+      \forall int *src, integer lo, hi, int val;
+        lo >= hi ==> count_val(src, lo, hi, val) == 0;
+
+    axiom count_val_hit :
+      \forall int *src, integer lo, hi, int val;
+        lo < hi && src[hi-1] == val ==>
+        count_val(src, lo, hi, val) == count_val(src, lo, hi-1, val) + 1;
+
+    axiom count_val_miss :
+      \forall int *src, integer lo, hi, int val;
+        lo < hi && src[hi-1] != val ==>
+        count_val(src, lo, hi, val) == count_val(src, lo, hi-1, val);
+  }
+*/
+
+/*@
+  requires \valid(src + (0 .. size-1));
+  requires \valid(target + (0 .. size-1));
+    requires val < INT_MAX;
+    requires val > INT_MAX;
+    requires \separated(src + (0 .. size-1), target + (0 .. size-1));
+    assigns target[0 .. size-1];
+    ensures \forall integer i; 0 <= i < size ==> \old(src[i] == val) ==> target[i] == 2*val;
+    ensures \forall integer i; 0 <= i < size ==> \old(src[i] != val) ==> target[i] == val;
+
+  ensures \result == count_val(src, 0, size, val);
+*/
+unsigned int mul_val_modif(int *src, int *target,
+                           unsigned int size, int val)
+{
+    unsigned int pos = 0;
+    unsigned int count = 0;
+
+    /*@ loop invariant 0 <= pos <= size;
+
+        loop invariant
+          \forall integer j; 0 <= j < pos ==>
+            src[j] == val ==> target[j] == 2*val;
+
+        loop invariant
+          \forall integer j; 0 <= j < pos ==>
+            src[j] != val ==> target[j] == src[j];
+
+        loop invariant
+          count == count_val(src, 0, pos, val);
+
+        loop assigns pos, count, target[0..size-1];
+        loop variant size - pos;
+    */
+    while (pos < size)
+    {
+        target[pos] = src[pos];
+
+        //@ assert target[pos] == src[pos];
+
+        if (target[pos] == val)
+        {
+            target[pos] *= 2;
+            //@ assert count < INT_MAX;
+            count++;
+        }
+
+        pos++;
+    }
+
+    return count;
 }
